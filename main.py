@@ -10,7 +10,10 @@ from utils import load_json
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Compare macOS Normal Mode vs Low Power Mode.")
+    parser = argparse.ArgumentParser(
+        prog="batterywatch",
+        description="BatteryWatch: compare macOS Normal Mode vs Low Power Mode.",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     record_parser = subparsers.add_parser("record", help="Record a session")

@@ -46,7 +46,12 @@ def parse_pmset_settings(output: str) -> dict[str, object]:
 def parse_top_output(output: str, top_n: int) -> list[dict[str, object]]:
     processes: list[dict[str, object]] = []
 
-    for line in output.splitlines():
+    # When `top -l 2` is used, only the second frame has valid CPU deltas.
+    # Split on the column header and keep the last frame.
+    frames = re.split(r"^\s*PID\s+COMMAND.*$", output, flags=re.MULTILINE)
+    body = frames[-1] if frames else output
+
+    for line in body.splitlines():
         match = PROCESS_LINE_RE.match(line)
         if not match:
             continue

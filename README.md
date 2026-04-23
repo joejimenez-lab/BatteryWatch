@@ -1,8 +1,8 @@
-# PowerDiff
+# BatteryWatch
 
-PowerDiff is a CLI tool for comparing macOS battery behavior in Normal Mode versus Low Power Mode.
+BatteryWatch is a macOS tool for comparing battery behavior in Normal Mode versus Low Power Mode.
 
-The MVP records short sessions, stores structured JSON samples, and compares two recordings to answer:
+It records short sessions, stores structured JSON samples, and compares two recordings to answer:
 
 - How fast the battery drained in each mode
 - Which processes changed the most
@@ -17,9 +17,9 @@ The MVP records short sessions, stores structured JSON samples, and compares two
 
 ## Requirements
 
-- macOS
+- macOS (Apple Silicon or Intel MacBook)
 - Python 3.10+
-- Access to `pmset` and `top`
+- Access to `pmset` and `top` (built in)
 
 ## Usage
 
@@ -50,7 +50,7 @@ python main.py record normal --duration 300 --interval 10 --top-n 10
 ## Project Layout
 
 ```text
-powerdiff/
+BatteryWatch/
 ├── main.py
 ├── collector.py
 ├── parser.py
@@ -60,8 +60,8 @@ powerdiff/
 └── sessions/
 ```
 
-## Notes
+## Roadmap
 
-- The collector is intentionally simple for the first milestone.
-- Session files are ignored by Git except for `sessions/.gitkeep`.
-- Future versions can add workload validation, graphs, and richer system metrics.
+- Phase 1 (current): CLI recording + comparison
+- Phase 2: richer metrics (powermetrics, temperature, background task breakdown)
+- Phase 3: native UI dashboard with live monitor + compare views

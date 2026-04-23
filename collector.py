@@ -16,7 +16,9 @@ def run_command(args: list[str]) -> str:
 def collect_sample(top_n: int) -> dict[str, Any]:
     battery_output = run_command(["pmset", "-g", "batt"])
     settings_output = run_command(["pmset", "-g"])
-    top_output = run_command(["top", "-l", "1", "-stats", "pid,command,cpu,mem"])
+    top_output = run_command(
+        ["top", "-l", "2", "-o", "cpu", "-n", str(top_n), "-stats", "pid,command,cpu,mem"]
+    )
 
     battery_data = parse_pmset_batt(battery_output)
     settings_data = parse_pmset_settings(settings_output)

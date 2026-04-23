@@ -33,8 +33,45 @@ def format_comparison(comparison: dict[str, Any], top_n: int = 5) -> str:
     else:
         lines.append("No process differences were found.")
 
+    similarity = comparison.get("workload_similarity")
+    if similarity is not None:
+        pct = similarity * 100
+        if similarity < 0.5:
+            warn = " — workloads look quite different; comparison may be unfair"
+        elif similarity < 0.75:
+            warn = " — workloads partially overlap; treat with some caution"
+        else:
+            warn = " — workloads match well"
+        lines.extend(["", f"Workload similarity: {pct:.0f}%{warn}"])
+
+    power_lines = _format_power(comparison)
+    if power_lines:
+        lines.extend(["", "Power / thermal:"] + power_lines)
+
     lines.extend(["", "Interpretation:", interpretation])
     return "\n".join(lines)
+
+
+def _format_power(comparison: dict[str, Any]) -> list[str]:
+    normal_power = comparison["normal"].get("power_averages") or {}
+    lowpower_power = comparison["lowpower"].get("power_averages") or {}
+    labels = {
+        "cpu_die_temp_c": ("CPU die temp", "C"),
+        "gpu_die_temp_c": ("GPU die temp", "C"),
+        "cpu_power_mw": ("CPU power", "mW"),
+        "gpu_power_mw": ("GPU power", "mW"),
+        "package_power_mw": ("Package power", "mW"),
+    }
+    out: list[str] = []
+    for field, (label, unit) in labels.items():
+        normal_value = normal_power.get(field)
+        lowpower_value = lowpower_power.get(field)
+        if normal_value is None and lowpower_value is None:
+            continue
+        normal_str = f"{normal_value:.1f}" if normal_value is not None else "—"
+        lowpower_str = f"{lowpower_value:.1f}" if lowpower_value is not None else "—"
+        out.append(f"{label}: {normal_str} -> {lowpower_str} {unit}")
+    return out
 
 
 def _build_interpretation(comparison: dict[str, Any]) -> str:

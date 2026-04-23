@@ -47,6 +47,25 @@ Optional recording flags:
 python main.py record normal --duration 300 --interval 10 --top-n 10
 ```
 
+Live terminal monitor:
+
+```bash
+python main.py monitor --interval 5
+```
+
+Include CPU/GPU temperature and package power (requires passwordless `sudo` for `powermetrics`):
+
+```bash
+python main.py record normal --with-power
+python main.py monitor --with-power
+```
+
+To enable, add an entry like this to `/etc/sudoers.d/batterywatch` via `sudo visudo -f /etc/sudoers.d/batterywatch`:
+
+```text
+yourusername ALL=(root) NOPASSWD: /usr/bin/powermetrics
+```
+
 ## Project Layout
 
 ```text

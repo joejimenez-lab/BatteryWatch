@@ -43,6 +43,26 @@ def parse_pmset_settings(output: str) -> dict[str, object]:
     return {"low_power_mode": low_power_mode}
 
 
+POWER_PATTERNS = {
+    "cpu_die_temp_c": re.compile(r"CPU die temperature:\s*([\d.]+)\s*C", re.IGNORECASE),
+    "gpu_die_temp_c": re.compile(r"GPU die temperature:\s*([\d.]+)\s*C", re.IGNORECASE),
+    "cpu_power_mw": re.compile(r"CPU Power:\s*([\d.]+)\s*mW", re.IGNORECASE),
+    "gpu_power_mw": re.compile(r"GPU Power:\s*([\d.]+)\s*mW", re.IGNORECASE),
+    "package_power_mw": re.compile(
+        r"(?:Combined Power|Package Power)(?:\s*\(CPU\s*\+\s*GPU\s*\+\s*ANE\))?:\s*([\d.]+)\s*mW",
+        re.IGNORECASE,
+    ),
+}
+
+
+def parse_powermetrics(output: str) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, pattern in POWER_PATTERNS.items():
+        match = pattern.search(output)
+        result[key] = float(match.group(1)) if match else None
+    return result
+
+
 def parse_top_output(output: str, top_n: int) -> list[dict[str, object]]:
     processes: list[dict[str, object]] = []
 

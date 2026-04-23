@@ -32,6 +32,10 @@ def session_summary(session: dict[str, Any]) -> dict[str, Any]:
 
     per_process: dict[str, list[float]] = defaultdict(list)
     total_cpu_samples: list[float] = []
+    command_set: set[str] = set()
+
+    power_fields = ("cpu_die_temp_c", "gpu_die_temp_c", "cpu_power_mw", "gpu_power_mw", "package_power_mw")
+    power_values: dict[str, list[float]] = {field: [] for field in power_fields}
 
     for sample in samples:
         sample_total_cpu = 0.0
@@ -39,8 +43,20 @@ def session_summary(session: dict[str, Any]) -> dict[str, Any]:
             command = str(process.get("command", "unknown"))
             cpu = float(process.get("cpu", 0.0))
             per_process[command].append(cpu)
+            command_set.add(command)
             sample_total_cpu += cpu
         total_cpu_samples.append(sample_total_cpu)
+
+        power = sample.get("power") or {}
+        for field in power_fields:
+            value = power.get(field)
+            if value is not None:
+                power_values[field].append(float(value))
+
+    power_averages: dict[str, float | None] = {
+        field: (sum(values) / len(values) if values else None)
+        for field, values in power_values.items()
+    }
 
     average_cpu_by_process = {
         command: sum(values) / len(values) for command, values in per_process.items() if values
@@ -58,9 +74,20 @@ def session_summary(session: dict[str, Any]) -> dict[str, Any]:
         "battery_drain_per_hour": drain_per_hour,
         "average_total_cpu": average_total_cpu,
         "average_cpu_by_process": average_cpu_by_process,
+        "process_set": command_set,
+        "power_averages": power_averages,
         "sample_count": len(samples),
         "low_power_mode": last.get("low_power_mode"),
     }
+
+
+def _jaccard(a: set[str], b: set[str]) -> float:
+    if not a and not b:
+        return 1.0
+    union = a | b
+    if not union:
+        return 1.0
+    return len(a & b) / len(union)
 
 
 def compare_sessions(normal_session: dict[str, Any], lowpower_session: dict[str, Any]) -> dict[str, Any]:
@@ -90,10 +117,22 @@ def compare_sessions(normal_session: dict[str, Any], lowpower_session: dict[str,
         ((lowpower_drain - normal_drain) / normal_drain) * 100 if normal_drain else 0.0
     )
 
+    workload_similarity = _jaccard(normal["process_set"], lowpower["process_set"])
+
+    power_deltas: dict[str, float | None] = {}
+    for field, normal_value in normal["power_averages"].items():
+        lowpower_value = lowpower["power_averages"].get(field)
+        if normal_value is None or lowpower_value is None:
+            power_deltas[field] = None
+        else:
+            power_deltas[field] = lowpower_value - normal_value
+
     return {
         "normal": normal,
         "lowpower": lowpower,
         "drain_difference_per_hour": lowpower_drain - normal_drain,
         "drain_improvement_pct": improvement_pct,
         "process_changes": process_changes,
+        "workload_similarity": workload_similarity,
+        "power_deltas": power_deltas,
     }
